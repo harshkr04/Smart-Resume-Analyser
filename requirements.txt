@@ -8,6 +8,7 @@ streamlit>=1.30.0
 # ----- NLP / ML -----
 sentence-transformers>=2.2.0    # Semantic embeddings (all-MiniLM-L6-v2)
 spacy>=3.7.0                    # NER, skill extraction
+en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
 skillNer>=1.0.0                 # ESCO-based skill taxonomy matching
 scikit-learn>=1.3.0             # ML classifiers, metrics
 joblib>=1.3.0                   # Model serialization

@@ -53,15 +53,7 @@ def get_nlp():
     """Load spaCy model (cached singleton)."""
     global _nlp_cache
     if _nlp_cache is None:
-        try:
-            _nlp_cache = spacy.load(SPACY_MODEL_NAME)
-        except OSError:
-            logger.warning(
-                "spaCy model '%s' not found. Downloading...", SPACY_MODEL_NAME
-            )
-            from spacy.cli import download
-            download(SPACY_MODEL_NAME)
-            _nlp_cache = spacy.load(SPACY_MODEL_NAME)
+        _nlp_cache = spacy.load(SPACY_MODEL_NAME)
     return _nlp_cache
 
 
