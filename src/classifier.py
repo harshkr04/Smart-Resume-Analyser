@@ -20,6 +20,8 @@ import numpy as np
 
 from src.config import CLASSIFIER_MODEL_PATH, TFIDF_VECTORIZER_PATH
 
+LABEL_ENCODER_PATH = CLASSIFIER_MODEL_PATH.parent / "label_encoder.pkl"
+
 logger = logging.getLogger(__name__)
 
 
@@ -48,6 +50,7 @@ class ResumeClassifier:
     def __init__(self):
         self.model = None
         self.vectorizer = None
+        self.label_encoder = None
         self._loaded = False
 
     def load(self) -> bool:
@@ -66,6 +69,9 @@ class ResumeClassifier:
         try:
             self.model = joblib.load(str(CLASSIFIER_MODEL_PATH))
             self.vectorizer = joblib.load(str(TFIDF_VECTORIZER_PATH))
+            if LABEL_ENCODER_PATH.is_file():
+                self.label_encoder = joblib.load(str(LABEL_ENCODER_PATH))
+                logger.info("Label encoder loaded from %s", LABEL_ENCODER_PATH)
             self._loaded = True
             logger.info("Classifier loaded from %s", CLASSIFIER_MODEL_PATH)
             return True
@@ -105,7 +111,11 @@ class ResumeClassifier:
 
             all_preds = [
                 CategoryPrediction(
-                    category=str(classes[idx]),
+                    category=(
+                        self.label_encoder.inverse_transform([classes[idx]])[0]
+                        if self.label_encoder is not None
+                        else str(classes[idx])
+                    ),
                     confidence=round(float(probas[idx]), 4),
                 )
                 for idx in sorted_indices

@@ -240,6 +240,13 @@ header { background: transparent !important; }
     border-radius: 10px;
 }
 
+/* Progress bar text label — dark text for contrast against teal bar */
+.stProgress p {
+    color: #0a192f !important;
+    font-weight: 600 !important;
+    text-shadow: 0 0 2px rgba(255, 255, 255, 0.3);
+}
+
 /* ── Metric Cards ────────────────────────────────────── */
 [data-testid="stMetric"] {
     background: rgba(255, 255, 255, 0.03);
