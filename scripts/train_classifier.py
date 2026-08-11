@@ -300,7 +300,7 @@ def main():
         if c in df.columns:
             cat_col = c
             break
-    for c in ["Resume", "resume", "Resume_str", "text", "Clean_Resume"]:
+    for c in ["Resume", "resume", "Resume_str", "text", "Clean_Resume", "Feature"]:
         if c in df.columns:
             text_col = c
             break
