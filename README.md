@@ -43,8 +43,14 @@ Smart-Resume-Analyser/
 │   ├── validate_data.py        # Data quality & leakage detection
 │   └── train_classifier.py     # Classifier training with CV + metrics
 ├── data/
-│   └── skills_taxonomy.json    # ESCO-sourced skill taxonomy
-├── models/                     # Saved model artifacts (gitignored)
+│   ├── clean_resume_data.csv   # 2,484 labeled resumes (included in repo)
+│   ├── skills_taxonomy.json    # ESCO-sourced skill taxonomy
+│   └── jobs_dataset_with_features.csv  # Job database (download separately — 608 MB)
+├── models/                     # Saved model artifacts (tracked in git)
+│   ├── resume_classifier.pkl   # Pre-trained TF-IDF + RandomForest classifier
+│   ├── tfidf_vectorizer.pkl    # Fitted TF-IDF vectorizer
+│   ├── label_encoder.pkl       # Category label encoder
+│   └── job_roles.pkl           # Cached job role embeddings
 ├── Dockerfile                  # HuggingFace Spaces deployment
 └── requirements.txt
 ```
@@ -83,16 +89,21 @@ python -m spacy download en_core_web_sm
 
 ```bash
 cp .env.example .env
-# Edit .env to add your OpenAI API key (optional, for AI suggestions)
+# Edit .env to add your API key (optional, for AI suggestions)
+# Supports: GROQ_API_KEY (Groq) or OPENAI_API_KEY (OpenAI GPT-4o-mini)
 ```
 
-### 4. (Optional) Download Training Data
+### 4. Download Jobs Dataset (for Job Recommendations)
 
-Download both CSVs from [Kaggle](https://www.kaggle.com/datasets/noorsaeed/resume-datasets) and place them in the `data/` directory:
-- `clean_resume_data.csv` — for classifier training
-- `jobs_dataset_with_features.csv` — for job recommendations
+> **Note:** `clean_resume_data.csv` and the pre-trained classifier model are already included in the repo. You only need to download the jobs dataset if you want the **Job Recommendations** feature.
 
-### 5. (Optional) Validate Data & Train Classifier
+Download `jobs_dataset_with_features.csv` (~608 MB) from [Kaggle — Resume Datasets](https://www.kaggle.com/datasets/noorsaeed/resume-datasets) and place it in the `data/` directory.
+
+This file exceeds GitHub's 100 MB file size limit and cannot be stored in the repo.
+
+### 5. (Optional) Re-train the Classifier
+
+A pre-trained classifier is included in `models/`. To re-train from scratch:
 
 ```bash
 # Validate data quality and check for leakage
@@ -139,7 +150,9 @@ HuggingFace Spaces provides **16GB RAM** on the free CPU tier — enough for the
 1. Push to GitHub
 2. Go to [share.streamlit.io](https://share.streamlit.io)
 3. Deploy from your repo, set main file as `app/streamlit_app.py`
-4. Add `OPENAI_API_KEY` to Streamlit secrets (optional)
+4. Add `GROQ_API_KEY` or `OPENAI_API_KEY` to Streamlit secrets (optional)
+
+> **Note:** `jobs_dataset_with_features.csv` (608 MB) is not in the repo due to GitHub's file size limit. The **Job Recommendations** feature will be unavailable on Streamlit Cloud unless you provide the dataset via an alternative method (e.g., Git LFS, cloud storage download script).
 
 ### Docker (Self-hosted / Render)
 
@@ -152,12 +165,12 @@ docker run -p 7860:7860 smart-resume-analyser
 
 ## 🔧 Model Caching Strategy
 
-| Model | Size | Download | Cache |
-|-------|------|----------|-------|
-| `all-MiniLM-L6-v2` | ~80MB | First run (auto) | `@st.cache_resource` — loads once per session |
+| Model | Size | Source | Cache |
+|-------|------|--------|-------|
+| `all-MiniLM-L6-v2` | ~80MB | First run (auto-download) | `@st.cache_resource` — loads once per session |
 | `en_core_web_sm` (spaCy) | ~12MB | `spacy download` | `@st.cache_resource` — loads once per session |
-| TF-IDF + RF classifier | ~5MB | `train_classifier.py` | Disk (`models/`) |
-| Job embeddings | ~1MB | First recommendation call | Disk (`models/job_embeddings.npy`) |
+| TF-IDF + RF classifier | ~49MB | Included in repo (`models/`) | Disk — pre-trained |
+| Job embeddings | ~564KB | Built on first recommendation call | Disk (`models/job_embeddings.npy`) |
 
 ---
 
@@ -165,7 +178,8 @@ docker run -p 7860:7860 smart-resume-analyser
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `OPENAI_API_KEY` | No | Enables LLM-powered resume improvement suggestions |
+| `GROQ_API_KEY` | No | Enables LLM-powered resume improvement suggestions (Groq) |
+| `OPENAI_API_KEY` | No | Enables LLM-powered suggestions (OpenAI GPT-4o-mini) |
 | `HF_HOME` | No | Override Hugging Face model cache directory |
 
 ---
